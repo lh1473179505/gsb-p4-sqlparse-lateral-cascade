@@ -1,7 +1,17 @@
 Development Version
 -------------------
 
-Nothing yet.
+Bug Fixes
+
+* Fix grouping of PostgreSQL LATERAL items in FROM lists. A LATERAL
+  keyword is now grouped together with the subquery or table function
+  that immediately follows it into a single FROM item. Previously a
+  bare LATERAL was swallowed into a preceding comma-separated
+  IdentifierList (e.g. ``t, LATERAL``) while the subquery was left
+  dangling, and chained LATERAL items cascaded into secondary
+  misgroupings (e.g. ``(subquery) x, LATERAL``). This applies uniformly
+  to comma-separated FROM lists and to JOIN ... LATERAL forms, and is
+  preserved when re-parsing the output of ``format(sql, reindent=True)``.
 
 
 Release 0.6.0 (Aug 13, 2026)

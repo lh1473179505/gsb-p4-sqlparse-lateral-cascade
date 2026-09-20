@@ -376,6 +376,29 @@ def group_aliased(tlist):
         tidx, token = tlist.token_next_by(i=I_ALIAS, t=T.Number, idx=tidx)
 
 
+@recurse()
+def group_lateral(tlist):
+    """Bind a LATERAL keyword to the table source that follows it.
+
+    In PostgreSQL a LATERAL derived table or table function forms a
+    single FROM item together with its source, e.g.
+    ``t, LATERAL (SELECT ...) x`` or ``CROSS JOIN LATERAL f(...) y``.
+    Without this grouping the bare LATERAL keyword is swallowed into a
+    preceding comma-separated IdentifierList (``t, LATERAL``) while the
+    subquery is left dangling, and with chained LATERAL items the error
+    cascades (``(subquery) x, LATERAL``).  Grouping LATERAL with the
+    immediately following source keeps each LATERAL item self-contained
+    before comma lists are formed.
+    """
+    tidx, token = tlist.token_next_by(m=(T.Keyword, 'LATERAL'))
+    while token:
+        nidx, next_ = tlist.token_next(tidx)
+        if imt(next_, i=(sql.Parenthesis, sql.Function, sql.Identifier)):
+            tlist.group_tokens(sql.Identifier, tidx, nidx, extend=True)
+        tidx, token = tlist.token_next_by(m=(T.Keyword, 'LATERAL'),
+                                          idx=tidx)
+
+
 @recurse(sql.Function)
 def group_functions(tlist):
     has_create = False
@@ -466,6 +489,7 @@ def group(stmt):
         group_as,
         group_aliased,
         group_assignment,
+        group_lateral,
 
         align_comments,
         group_identifier_list,
