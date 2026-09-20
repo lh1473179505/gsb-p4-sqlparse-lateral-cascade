@@ -376,6 +376,32 @@ def group_aliased(tlist):
         tidx, token = tlist.token_next_by(i=I_ALIAS, t=T.Number, idx=tidx)
 
 
+@recurse()
+def group_lateral(tlist):
+    """Groups LATERAL with the derived table or table function that
+    immediately follows it.
+
+    In PostgreSQL a LATERAL keyword binds to the *next* FROM item only
+    (a subquery or a table function, optionally aliased). Grouping them
+    into a single Identifier keeps that FROM item intact, so that
+    - a preceding comma cannot absorb LATERAL into an IdentifierList
+      (``t, LATERAL``), and
+    - chained LATERAL items (``LATERAL (...) x, LATERAL (...) y``) do
+      not cascade into secondary lists (``(...) x, LATERAL``).
+
+    The same rule applies to comma-separated FROM lists and to JOIN
+    forms (``CROSS JOIN LATERAL ...`` / ``LEFT JOIN LATERAL ...``).
+    """
+    tidx, token = tlist.token_next_by(m=(T.Keyword, 'LATERAL'))
+    while token:
+        nidx, next_ = tlist.token_next(tidx)
+        if isinstance(next_, sql.Identifier):
+            first = next_.token_first(skip_cm=True)
+            if isinstance(first, (sql.Parenthesis, sql.Function)):
+                tlist.group_tokens(sql.Identifier, tidx, nidx, extend=True)
+        tidx, token = tlist.token_next_by(m=(T.Keyword, 'LATERAL'), idx=tidx)
+
+
 @recurse(sql.Function)
 def group_functions(tlist):
     has_create = False
@@ -468,6 +494,7 @@ def group(stmt):
         group_assignment,
 
         align_comments,
+        group_lateral,
         group_identifier_list,
         group_values,
     ]:

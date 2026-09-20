@@ -1,7 +1,17 @@
 Development Version
 -------------------
 
-Nothing yet.
+Bug Fixes
+
+* Group PostgreSQL ``LATERAL`` with the derived table or table function
+  that immediately follows it into a single FROM item. Previously a
+  comma-separated FROM list absorbed the keyword into an
+  ``IdentifierList`` (``t, LATERAL``), detaching it from its subquery,
+  and chained LATERAL items cascaded into secondary lists
+  (``(subquery) x, LATERAL``). The same grouping rule now applies to
+  comma-separated FROM lists and to JOIN forms
+  (``CROSS JOIN LATERAL`` / ``LEFT JOIN LATERAL``), so plain derived
+  tables are no longer mis-grouped either.
 
 
 Release 0.6.0 (Aug 13, 2026)
