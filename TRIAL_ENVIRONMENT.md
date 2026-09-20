@@ -6,7 +6,7 @@ Recreate the environment:
 
 ```sh
 python3 -m venv .venv
-.venv/bin/python -m pip install -U pip setuptools wheel hatchling
+.venv/bin/python -m pip install -U pip setuptools wheel hatchling editables pathspec packaging
 .venv/bin/python -m pip install -r requirements-trial.txt
 .venv/bin/python -m pip install --no-build-isolation --no-deps -e .
 ```
